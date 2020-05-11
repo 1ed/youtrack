@@ -8,14 +8,12 @@ $youtrack = new YouTrack\Connection(
     YOUTRACK_PASSWORD
 );
 
-
-// make sure, this exists!
-#$issueId = 'Sandbox-6';
-
-$issues = [
-    'Sandbox-36'
-];
-
+$issues = [];
+if (!empty($argv[1])) {
+    $issues = explode(',', $argv[1]);
+} else {
+    $issues[] = 'Sandbox-64';
+}
 
 foreach ($issues as $issueId) {
 
@@ -24,14 +22,14 @@ foreach ($issues as $issueId) {
     $links = $issue->getLinks();
     foreach ($links as $link) {
 
-        echo nl2br(print_r([
+        echo print_r([
             'target' => $link->getTarget(),
             'source' => $link->getSource(),
             'typeInward' => $link->getTypeInward(),
             'typeOutward' => $link->getTypeOutward(),
             'typeName' => $link->getTypeName(),
-        ], true));
+        ], true);
 
-        echo $link->getSource() . ' ' . $link->getTypeOutward() . ' ' . $link->getTarget();
+        echo $link->getSource() . ' ' . $link->getTypeOutward() . ' ' . $link->getTarget() . PHP_EOL;
     }
 }

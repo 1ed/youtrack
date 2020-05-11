@@ -1,7 +1,7 @@
 <?php
 namespace YouTrack;
-require_once("requirements.php");
-require_once("testconnection.php");
+require_once 'requirements.php';
+require_once 'testconnection.php';
 
 
 /**
@@ -18,10 +18,10 @@ class AttachmentsTest extends \PHPUnit_Framework_TestCase
     {
         try {
             $attachment = new Attachment();
+            $this->assertInstanceOf('\\YouTrack\\Attachment', $attachment);
         } catch (\Exception $e) {
             $this->fail();
         }
-        $this->assertInstanceOf('\\YouTrack\\Attachment', $attachment);
     }
 
     public function testCanCreateAttachmentFromResponse()
@@ -31,10 +31,10 @@ class AttachmentsTest extends \PHPUnit_Framework_TestCase
         $xml = $xml[0];
         try {
             $attachment = new Attachment($xml);
+            $this->assertInstanceOf('\\YouTrack\\Attachment', $attachment);
         } catch (\Exception $e) {
             $this->fail();
         }
-        $this->assertInstanceOf('\\YouTrack\\Attachment', $attachment);
     }
 
     private function createAttachment()
@@ -42,7 +42,7 @@ class AttachmentsTest extends \PHPUnit_Framework_TestCase
         $xml = simplexml_load_file($this->singleAttachmentFile);
         $xml = $xml->children();
         $xml = $xml[0];
-        return $attachment = new Attachment($xml);
+        return new Attachment($xml);
     }
 
     public function testUrlIsSetAfterXmlLoad()
@@ -75,13 +75,15 @@ class AttachmentsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('All Users', $attachment->getGroup());
     }
 
-    public function testCreatedIsSetAfterXmlLoadWithTimezoneAmerica()
+    public function testCreatedIsSetAfterXmlLoadWithTimezoneNewYork()
     {
         date_default_timezone_set('America/New_York');
         $attachment = $this->createAttachment();
-        //26.09.13 16:05:32
+        // 1380204332676
+        // 26.09.13 10:05:32
+        // http://www.epochconverter.com/timezones?q=1380204332&tz=America%2FNew_York
         $this->assertInstanceOf('\\DateTime', $attachment->getCreated());
-        $this->assertEquals('2013-09-26 14:05:32', $attachment->getCreated()->format('Y-m-d H:i:s'));
+        $this->assertEquals('2013-09-26 10:05:32', $attachment->getCreated()->format('Y-m-d H:i:s'));
     }
 
     public function testCreatedIsSetAfterXmlLoadWithTimezoneGermany()
@@ -90,7 +92,7 @@ class AttachmentsTest extends \PHPUnit_Framework_TestCase
         $attachment = $this->createAttachment();
         //26.09.13 16:05:32
         $this->assertInstanceOf('\\DateTime', $attachment->getCreated());
-        $this->assertEquals('2013-09-26 14:05:32', $attachment->getCreated()->format('Y-m-d H:i:s'));
+        $this->assertEquals('2013-09-26 16:05:32', $attachment->getCreated()->format('Y-m-d H:i:s'));
     }
 
     public function testCreateAttachmentFromAttachment()
@@ -102,7 +104,9 @@ class AttachmentsTest extends \PHPUnit_Framework_TestCase
         /**
          * @var \YouTrack\Connection $youtrack
          */
-        $youtrack = $this->getMock('\\YouTrack\\TestConnection', array('request'));
+        $youtrackBuilder = $this->getMockBuilder('\\YouTrack\\TestConnection');
+        $youtrackBuilder->setMethods(['request']);
+        $youtrack = $youtrackBuilder->getMock();
 
         $youtrack->expects($this->once())
             ->method('request')
@@ -111,5 +115,56 @@ class AttachmentsTest extends \PHPUnit_Framework_TestCase
         $result = $youtrack->createAttachmentFromAttachment('TEST-2', $attachment);
 
         $this->assertEquals($expectedResult, $result);
+    }
+
+    public function createAttachmentProvider()
+    {
+        $createdDateTime = new \DateTime();
+
+        return [
+            // name, authorLogin, created, group, expectedParams
+            ['', '', null, '', []],
+            ['file.txt', '', null, '', ['name' => 'file.txt']],
+            ['', 'authorX', null, '', ['authorLogin' => 'authorX']],
+            ['', '', $createdDateTime, '', ['created' => $createdDateTime->getTimestamp() * 1000]],
+            ['', '', null, 'groupX', ['group' => 'groupX']]
+        ];
+    }
+
+    /**
+     * @dataProvider createAttachmentProvider
+     */
+    public function testCreateAttachment($name, $authorLogin, $created, $group, $params)
+    {
+        $attachmentFilename = __DIR__ . '/testdata/attachment.xml';
+        $issueId = 'TEST-123';
+        $expectedUrl = '/issue/' . rawurlencode($issueId) . '/attachment?' . http_build_query($params);
+        $expectedResult = 'myResponseValue';
+
+        $youtrackBuilder = $this->getMockBuilder('\\YouTrack\\TestConnection');
+        $youtrackBuilder->setMethods(['request']);
+        $youtrack = $youtrackBuilder->getMock();
+
+        $youtrack->expects($this->once())
+            ->method('request')
+            ->with('POST', $expectedUrl, $attachmentFilename)
+            ->will($this->returnValue($expectedResult));
+
+        /** @var \YouTrack\Connection $youtrack */
+        $result = $youtrack->createAttachment($issueId, $attachmentFilename, $name, $authorLogin, $created, $group);
+
+        $this->assertEquals($expectedResult, $result);
+    }
+
+    public function testCreateAttachmentThrowsExceptionOnNonExistingFile()
+    {
+        $youtrackBuilder = $this->getMockBuilder('\\YouTrack\\TestConnection');
+        $youtrackBuilder->setMethods(['request']);
+        $youtrack = $youtrackBuilder->getMock();
+
+        $this->expectException('\Exception');
+
+        /** @var \YouTrack\Connection $youtrack */
+        $youtrack->createAttachment('TEST-123', '/non/existing/file.txt');
     }
 }

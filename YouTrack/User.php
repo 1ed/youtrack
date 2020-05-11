@@ -1,13 +1,33 @@
 <?php
 namespace YouTrack;
 
-
 /**
  * A class describing a youtrack user.
- * @todo Add methods for hashing and comparison.
+ *
+ * @property string login
+ * @method string getLogin
+ * @method string setLogin(string $value)
+ * @property string fullName
+ * @method string getFullName
+ * @method string setFullName(string $value)
+ * @property string email
+ * @method string getEmail
+ * @method string setEmail(string $value)
+ * @property string jabber
+ * @method string getJabber
+ * @method string setJabber(string $value)
+ * @property string lastAccess
+ * @method string getLastAccess
+ * @method string setLastAccess(string $value)
+ * @property string groupsUrl
+ * @method string getGroupsUrl
+ * @method string setGroupsUrl(string $value)
+ * @property string roleUrl
+ * @method string getRoleUrl
+ * @method string setRoleUrl(string $value)
+ *
+ * @link https://www.jetbrains.com/help/youtrack/incloud/GET-User.html
  */
-class User extends Object {
-    public function __construct(\SimpleXMLElement $xml = NULL, Connection $youtrack = NULL) {
-        parent::__construct($xml, $youtrack);
-    }
+class User extends BaseObject
+{
 }

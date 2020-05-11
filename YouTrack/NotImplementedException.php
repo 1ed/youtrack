@@ -4,8 +4,8 @@ namespace YouTrack;
 /**
  * A simple exception that should be raised if a function is not yet implemented.
  */
-class NotImplementedException extends \Exception {
-
+class NotImplementedException extends \Exception
+{
     /**
      * Constructor
      *
@@ -15,7 +15,7 @@ class NotImplementedException extends \Exception {
     {
         $code = 0;
         $previous = NULL;
-        $message = 'This function is not yet implemented: "'. $function_name .'"!';
+        $message = 'This function is not yet implemented: "' . $function_name . '"!';
         parent::__construct($message, $code, $previous);
     }
 }

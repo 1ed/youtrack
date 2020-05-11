@@ -1,6 +1,7 @@
 <?php
 namespace YouTrack;
-require_once("requirements.php");
+require_once 'requirements.php';
+
 /**
  * Unit test for the youtrack issue class.
  *
@@ -10,16 +11,17 @@ require_once("requirements.php");
 class IssueTest extends \PHPUnit_Framework_TestCase
 {
 
-    private $filename = "test/testdata/issue.xml";
+    private $filename = 'test/testdata/issue.xml';
 
-    public function test___construct01()
+    public function testConstruct01()
     {
         $xml = simplexml_load_file($this->filename);
         $issue = new Issue($xml);
         $this->assertEquals(3, count($issue->__get('links')));
     }
 
-    public function test___construct02() {
+    public function testConstruct02()
+    {
         $xml = simplexml_load_file($this->filename);
         $issue = new Issue($xml);
         $this->assertEquals(3, count($issue->__get('attachments')));

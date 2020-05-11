@@ -1,20 +1,33 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: nepda
- * Date: 24.03.13
- * Time: 14:51
- * To change this template use File | Settings | File Templates.
- */
 namespace YouTrack;
 
 /**
  * A class describing a youtrack build.
  */
-class Build extends Object
+class Build extends BundleElement
 {
+    /** @var \DateTime */
+    private $assembleDate;
+
+    /**
+     * @param \SimpleXMLElement|null $xml
+     * @param Connection|null $youtrack
+     */
     public function __construct(\SimpleXMLElement $xml = null, Connection $youtrack = null)
     {
-        parent::__construct($xml, $youtrack);
+        parent::__construct('build', $xml, $youtrack);
+        $this->updateDateAttributes(
+            [
+                'assembleDate',
+            ]
+        );
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getAssembleDate()
+    {
+        return $this->assembleDate;
     }
 }

@@ -1,77 +1,40 @@
 <?php
-namespace YouTrack;
 
+namespace YouTrack;
 
 /**
  * A class describing a YouTrack attachment.
+ *
+ * @property string url
+ * @method string getUrl
+ * @property string id
+ * @method string getId
+ * @method string setId(string $value)
+ * @property string name
+ * @method string getName
+ * @method string setName(string $value)
+ * @property string group
+ * @method string getGroup
+ * @method string setGroup(string $value)
+ * @property string authorLogin
+ * @method string getAuthorLogin
+ * @method string setAuthorLogin(string $value)
+ * @property string created
+ * @method \DateTime getCreated
+ *
+ * @link https://www.jetbrains.com/help/youtrack/incloud/Get-Attachments-of-an-Issue.html
  */
-class Attachment extends Object
+class Attachment extends BaseObject
 {
-    /**
-     * The attachment id
-     *
-     * @var string
-     */
-    protected $id;
-
-    /**
-     * The url to the real file content
-     * @var string
-     */
-    protected $url;
-
-
-    /**
-     * The filename
-     *
-     * @var string
-     */
-    protected $name;
-
-
-    /**
-     * The username who has uploaded this attachment
-     *
-     * @var string
-     */
-    protected $authorLogin;
-
-
-    /**
-     * The group who has access rights
-     *
-     * @var string
-     */
-    protected $group;
-
-
-    /**
-     * The upload date
-     *
-     * @var \DateTime
-     * @see setCreated
-     * @see getCreated
-     */
-    protected $created;
-
-
     public function __construct(\SimpleXMLElement $xml = NULL, Connection $youtrack = NULL)
     {
         parent::__construct($xml, $youtrack);
-
-        $methods = get_class_methods($this);
-
-        if ($xml) {
-            foreach ($xml->attributes() as $key => $value) {
-                $method = 'set' . ucfirst($key);
-
-                if (in_array($method, $methods)) {
-                    $this->$method((string)$value);
-                }
-            }
-        }
+        $this->updateDateAttributes(
+            [
+                'created',
+            ]
+        );
     }
-
 
     /**
      * Fetches the file content from this attachment
@@ -89,168 +52,14 @@ class Attachment extends Object
         }
     }
 
-
-    /**
-     * Sets the authorLogin
-     *
-     * @param string $authorLogin
-     * @return Attachment
-     * @see getAuthorLogin
-     * @see $authorLogin
-     */
-    public function setAuthorLogin($authorLogin)
-    {
-        $this->authorLogin = $authorLogin;
-        return $this;
-    }
-
-
-    /**
-     * Returns the authorLogin
-     *
-     * @return string
-     * @see setAuthorLogin
-     * @see $authorLogin
-     */
-    public function getAuthorLogin()
-    {
-        return $this->authorLogin;
-    }
-
-
-    /**
-     * Sets the created
-     *
-     * @param \DateTime $created
-     * @return Attachment
-     * @see getCreated
-     * @see $created
-     */
-    public function setCreated($created)
-    {
-        if (!$created instanceof \DateTime) {
-            $tmp = false;
-            try {
-                // The API returns the timestamp in milliseconds
-                // @see http://confluence.jetbrains.com/display/YTD4/Timestamps+in+REST+API
-                $ts = (int)(((int)$created) / 1000);
-                $tmp = new \DateTime('@' . $ts);
-                #$tmp = new \DateTime();
-                #$tmp->setTimestamp($ts);
-            } catch (\Exception $e) {
-
-                // we could throw it... but.
-            }
-            if ($tmp) {
-                $created = $tmp;
-            }
-        }
-        $this->created = $created;
-        return $this;
-    }
-
-
-    /**
-     * Returns the created
-     *
-     * @return \DateTime
-     * @see setCreated
-     * @see $created
-     */
-    public function getCreated()
-    {
-        return $this->created;
-    }
-
-
-    /**
-     * Sets the group
-     *
-     * @param string $group
-     * @return Attachment
-     * @see getGroup
-     * @see $group
-     */
-    public function setGroup($group)
-    {
-        $this->group = $group;
-        return $this;
-    }
-
-
-    /**
-     * Returns the group
-     *
-     * @return string
-     * @see setGroup
-     * @see $group
-     */
-    public function getGroup()
-    {
-        return $this->group;
-    }
-
-
-    /**
-     * Sets the id
-     *
-     * @param string $id
-     * @return Attachment
-     * @see getId
-     * @see $id
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-
-    /**
-     * Returns the id
-     *
-     * @return string
-     * @see setId
-     * @see $id
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-
-    /**
-     * Sets the name
-     *
-     * @param string $name
-     * @return Attachment
-     * @see getName
-     * @see $name
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-
-    /**
-     * Returns the name
-     *
-     * @return string
-     * @see setName
-     * @see $name
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-
     /**
      * Sets the url
      *
-     * @param string $url
+     * You can pass a array as $url and provide more information about the file.
+     *
+     * e.g.: `$url = ['filename' => $filename, 'file' => $filepath];`
+     *
+     * @param string|array $url
      * @return Attachment
      * @see getUrl
      * @see $url
@@ -264,28 +73,16 @@ class Attachment extends Object
         //
         // So we fix this, by checking, if the connection is via HTTPS and if so
         // the protocol will be changed from http to https
-        if (is_string($url) && $this->youtrack) {
-            if (substr($url, 0, strlen('https')) != 'https') {
-                if ($this->youtrack->isHttps()) {
-
-                    $url = 'https' . substr($url, strlen('https')-1);
-                }
-            }
+        if (
+            $this->youtrack &&
+            $this->youtrack->isHttps() &&
+            is_string($url) &&
+            0 === strpos($url, 'http') &&
+            0 !== strpos($url, 'https')
+        ) {
+            $url = 'https' . substr($url, strlen('https') - 1);
         }
-        $this->url = $url;
+        $this->attributes['url'] = $url;
         return $this;
-    }
-
-
-    /**
-     * Returns the url
-     *
-     * @return string
-     * @see setUrl
-     * @see $url
-     */
-    public function getUrl()
-    {
-        return $this->url;
     }
 }

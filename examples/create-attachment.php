@@ -9,11 +9,11 @@ $youtrack = new YouTrack\Connection(
 );
 
 
-$issueId = 'Sandbox-6';
+$issueId = 'Sandbox-57';
 
 $attachment = new YouTrack\Attachment();
 
-$attachment->setUrl(dirname(__FILE__) . '/attachment.txt');
+$attachment->setUrl(__DIR__ . '/attachment.txt');
 $attachment->setName('mylog');
 
-$youtrack->createAttachmentFromAttachment($issueId, $attachment);
+$result = $youtrack->createAttachmentFromAttachment($issueId, $attachment);
